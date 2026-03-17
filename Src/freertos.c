@@ -27,6 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "usart.h"
+#include "i2c.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +38,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+/* Adjust I2C address and buffer size to your hardware/protocol */
+#define I2C_PASSTHROUGH_ADDR (0x50U << 1)
+#define USART1_RX_BUF_SIZE   128U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,6 +52,11 @@
 /* USER CODE BEGIN Variables */
 static volatile uint8_t usart1_tx_done = 1;
 osThreadId_t usart1TaskHandle;
+static uint8_t usart1_rx_buf[USART1_RX_BUF_SIZE];
+static uint8_t usart1_i2c_buf[USART1_RX_BUF_SIZE];
+static volatile uint16_t usart1_i2c_len = 0;
+static uint8_t usart1_rx_byte = 0;
+static volatile uint16_t usart1_rx_len = 0;
 /* USER CODE END Variables */
 osThreadId_t defaultTaskHandle;
 
@@ -133,16 +142,17 @@ void StartDefaultTask(void *argument)
 /* USER CODE BEGIN Application */
 void StartUsart1Task(void *argument)
 {
-  static const uint8_t msg[] = "Hello World\r\n";
-
   /* USER CODE BEGIN StartUsart1Task */
+  (void)HAL_UART_Receive_IT(&huart1, &usart1_rx_byte, 1U);
+
   for(;;)
   {
-    if (HAL_UART_GetState(&huart1) == HAL_UART_STATE_READY)
+    (void)osThreadFlagsWait(0x01U, osFlagsWaitAny, osWaitForever);
+    if (usart1_i2c_len > 0U)
     {
-      (void)HAL_UART_Transmit_DMA(&huart1, (uint8_t*)msg, sizeof(msg) - 1);
+      (void)HAL_I2C_Master_Transmit(&hi2c1, I2C_PASSTHROUGH_ADDR, usart1_i2c_buf, usart1_i2c_len, 100);
+      usart1_i2c_len = 0U;
     }
-    osDelay(1000);
   }
   /* USER CODE END StartUsart1Task */
 }
@@ -162,6 +172,28 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   {
     (void)HAL_UART_AbortTransmit(huart);
     usart1_tx_done = 1;
+  }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1)
+  {
+    if (usart1_rx_len < USART1_RX_BUF_SIZE)
+    {
+      usart1_rx_buf[usart1_rx_len++] = usart1_rx_byte;
+    }
+
+    /* Frame end condition: newline or buffer full */
+    if ((usart1_rx_byte == 0xFF) || (usart1_rx_len >= USART1_RX_BUF_SIZE))
+    {
+      memcpy(usart1_i2c_buf, usart1_rx_buf, usart1_rx_len);
+      usart1_i2c_len = usart1_rx_len;
+      usart1_rx_len = 0;
+      (void)osThreadFlagsSet(usart1TaskHandle, 0x01U);
+    }
+
+    (void)HAL_UART_Receive_IT(&huart1, &usart1_rx_byte, 1U);
   }
 }
 /* USER CODE END Application */

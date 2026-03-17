@@ -26,6 +26,8 @@
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash.h
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ex.h
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_flash_ramfunc.h
+01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c.h
+01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_i2c_ex.h
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h
 01_freertos_my\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h
@@ -41,5 +43,6 @@
 01_freertos_my\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
 01_freertos_my\main.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
 01_freertos_my\main.o: ../Inc/dma.h
+01_freertos_my\main.o: ../Inc/i2c.h
 01_freertos_my\main.o: ../Inc/usart.h
 01_freertos_my\main.o: ../Inc/gpio.h
